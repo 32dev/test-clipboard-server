@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clipboard Image Upload</title>
+</head>
+
+<body>
+    <div id="target"></div>
+    <input type="file" id="fileInput" style="display: none;">
+    <button onclick="uploadClipboardImage()">Upload Clipboard Image</button>
+
+    <script>
+        function uploadClipboardImage() {
+            const target = document.getElementById('target');
+            const image = target.querySelector('img');
+            if (!image) {
+                alert('No image found in clipboard.');
+                return;
+            }
+
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = image.width;
+            canvas.height = image.height;
+            ctx.drawImage(image, 0, 0);
+
+            canvas.toBlob(function (blob) {
+                const formData = new FormData();
+                formData.append('image', blob, 'clipboard_image.png');
+
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', '/upload'); // 서버의 업로드 엔드포인트로 설정하세요.
+                xhr.onload = function () {
+                    if (xhr.status === 200) {
+                        console.log('Clipboard image uploaded successfully.');
+                    } else {
+                        console.error('Upload failed.');
+                    }
+                };
+                xhr.send(formData);
+            }, 'image/png');
+        }
+
+        document.onpaste = function (evt) {
+            const dT = evt.clipboardData || window.clipboardData;
+            const file = dT.files[0];
+            const reader = new FileReader();
+            reader.onload = function () {
+                const target = document.getElementById('target');
+                const image = document.createElement('img');
+                image.src = reader.result;
+                target.appendChild(image);
+            };
+            reader.readAsDataURL(file);
+        };
+    </script>
+</body>
+
+</html>
